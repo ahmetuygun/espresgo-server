@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Created by rajeevkumarsingh on 02/08/17.
+ * Created by ahmetuygun
  */
 @RestController
 @RequestMapping("/api/util")

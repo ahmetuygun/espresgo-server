@@ -5,22 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Created by ahmetuygun
- */
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SignUpRequest {
+public class GetOrderByUidRequest {
 
-    private String name;
-
-    private String phone;
-
-    private String email;
-
-    private String password;
-    
+    private String uid;
 }

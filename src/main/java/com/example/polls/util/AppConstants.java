@@ -5,6 +5,13 @@ public interface AppConstants {
     String DEFAULT_PAGE_SIZE = "30";
 
     int MAX_PAGE_SIZE = 50;
+    String TOKEN = "TOKEN";
+    String USED = "USED";
+
+    String ILKKAHVE = "ILKKAHVE2020";
+
+
+
 
     int NEW_ORDER = 0;
     int PRAPARING_ORDER = 1;
@@ -13,6 +20,7 @@ public interface AppConstants {
 
     String HISTORY_METHOD = "HISTORY_METHOD";
     String NEWORDERS_METHOD = "";
+    String BY_UID = "BY_UID";
 
     String ORDER_STATUS = "ORDER_STATUS";
 
@@ -20,6 +28,16 @@ public interface AppConstants {
 
     String OPEN = "1";
     String CLOSE = "0";
+
+
+
+
+    public static class UserStatus{
+
+        public static Integer ACTIVE = 2;
+        public static Integer PASSIVE = 3;
+        public static Integer DISABLED = 4;
+    }
 
 
     public static class ResponseCode{

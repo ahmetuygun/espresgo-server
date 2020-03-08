@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by rajeevkumarsingh on 01/08/17.
+ * Created by ahmetuygun
  */
 
 @Entity
@@ -38,7 +38,12 @@ public class User extends DateAudit {
     @NotBlank
     @Size(max = 100)
     private String password;
-    
+
+
+
+    @NotBlank
+    @Size(max = 100)
+    private String keyManuel;
 
     @NotBlank
     @Size(max = 100)
@@ -49,6 +54,13 @@ public class User extends DateAudit {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+
+    private Integer status;
+
+    private String token;
+
+    private String otp;
 
     public User() {
 
@@ -123,6 +135,36 @@ public class User extends DateAudit {
 	public void setPhone(String phone) {
 		this.phone = phone;
 	}
-    
-    
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public String getKeyManuel() {
+        return keyManuel;
+    }
+
+    public void setKeyManuel(String keyManuel) {
+        this.keyManuel = keyManuel;
+    }
 }

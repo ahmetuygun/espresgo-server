@@ -17,6 +17,8 @@ public class PushOrderRequest {
     private String orderDate;
     private String orderItemNames;
     private String addessText;
+    private String statusString;
+
 
 
 }

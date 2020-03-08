@@ -26,7 +26,7 @@ public class Coffee {
     private String title;
     
     @NotBlank
-    @Size(max = 300)
+    @Size(max = 500)
     private String image;
     
     @NotBlank
@@ -35,8 +35,13 @@ public class Coffee {
     
     @NotBlank
     private BigDecimal startPrice;
-    
+
+    @NotBlank
+    private String productType;
+
     private int status;
+
+
     
 
     

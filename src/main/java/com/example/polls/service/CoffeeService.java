@@ -9,7 +9,7 @@ import java.util.*;
 
 import com.example.polls.model.*;
 import com.example.polls.model.rto.*;
-import com.example.polls.repository.CoffeeDetailRepository;
+import com.example.polls.repository.*;
 import com.example.polls.util.AppConstants;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -17,14 +17,13 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.*;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.example.polls.repository.AddressRepository;
-import com.example.polls.repository.CoffeeOrderRepository;
-import com.example.polls.repository.OrderSelectionRepository;
 import com.example.polls.security.UserPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
@@ -47,6 +46,9 @@ public class CoffeeService {
     FirebaseOptions options;
     FileInputStream serviceAccount;
 
+
+    @Value("${orderPushServiceUrl}")
+    private String orderPushServiceUrl;
 
     @Autowired
     OrderSelectionRepository orderSelectionRepository;
@@ -84,15 +86,47 @@ public class CoffeeService {
         if ((activeOrderCount > 20 && !request.isSendLaterOption() && !request.isSendLaterOk())) {
 
             return GenericResponse.builder().
-                    message(AppConstants.ResponseCodeMessage.BUSY + "Dilerseniz 25 dakika sonra göndermek üzere sıraya alalım. ").
+                    message("Malesef şu an çok yoğunuz. Lütfen 15 dk sonra tekrar sipariş vermeyi deneyin.").
                     status(0).
-                    responseCode(AppConstants.ResponseCode.BUSY).build();
+                    responseCode(AppConstants.ResponseCode.ORDER_CLOSED).build();
         }
 
 
         try {
             Optional<Adress> adress = addressRepository.findByUser(currentUser.getId());
             StringBuilder itemNames = new StringBuilder();
+            BigDecimal discountAmount = BigDecimal.ZERO;
+
+
+            if (request.getCampaignCode() != null && !StringUtils.isEmpty(request.getCampaignCode())) {
+                List<FirstCoffeeCampaign> firstCoffeeCampaign = firstCoffeeCampaignRepository.findByUser(currentUser.getId(), request.getCampaignCode(),
+                        AppConstants.TOKEN);
+                if (firstCoffeeCampaign!=null && firstCoffeeCampaign.size()>0) {
+
+                    if(request.getOrders()!=null && request.getOrders().size()>0){
+                        request.getOrders().sort((r1, r2) -> {
+                            BigDecimal price1 = r1.getTotalPrice();
+                            price1 = price1.divide(BigDecimal.valueOf(r1.getProductAmount()));
+                            BigDecimal price2 = r2.getTotalPrice();
+                            price2 = price2.divide(BigDecimal.valueOf(r2.getProductAmount()));
+                            return price1.compareTo(price2);
+                        });
+                    }
+                    BigDecimal firstElementPrice = BigDecimal.ZERO;
+                    firstElementPrice = request.getOrders().get(0).getTotalPrice();
+                    discountAmount = request.getOrders().get(0).getTotalPrice();
+                    discountAmount= discountAmount.divide(BigDecimal.valueOf(request.getOrders().get(0).getProductAmount()));
+                    discountAmount = discountAmount.negate();
+                    request.getOrders().get(0).setTotalPrice(firstElementPrice.add(discountAmount));
+
+                    firstCoffeeCampaign.forEach(item -> {
+                                item.setStatus(AppConstants.USED);
+                                firstCoffeeCampaignRepository.save(item);
+                            }
+                    );
+
+                }
+            }
 
             request.getOrders().forEach(orderRequest -> {
 
@@ -129,16 +163,23 @@ public class CoffeeService {
             addressText.append(adress.get()!=null && adress.get().getBuilding()!=null ? adress.get().getBuilding().getName()+ "-": "Bina:? -");
             addressText.append(adress.get()!=null && adress.get().getCompany()!=null ? adress.get().getCompany().getName(): "Şirket:? -");
 
+            String address  = new String(addressText.toString().getBytes("UTF-8") , "Windows-1252");
+
+
             PushOrderRequest pushOrderRequest = PushOrderRequest.builder()
                     .orderUid(uui)
                     .orderDate(orderDate)
-                    .addessText(addressText.toString())
+                    .addessText(address)
                     .orderItemNames(itemNames.toString())
                     .status(String.valueOf(AppConstants.NEW_ORDER))
+                    .statusString(getStatus(AppConstants.NEW_ORDER))
                     .build();
-            ResponseEntity<String> response = restTemplate.postForEntity("http://localhost:8080/api/pushOrder",
+            ResponseEntity<String> response = restTemplate.postForEntity(orderPushServiceUrl+"/pushOrder",
                     pushOrderRequest,
                     String.class);
+
+
+
 
         } catch (Exception e) {
 
@@ -162,7 +203,55 @@ public class CoffeeService {
 
     }
 
-    public OrderHistoryRto getOrders(UserPrincipal currentUser, String method) {
+    @Autowired
+    FirstCoffeeCampaignRepository firstCoffeeCampaignRepository;
+
+    public ApplyCampaignResponse applyCampaign(ApplyCampaingRequest request, UserPrincipal currentUser) {
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        List<FirstCoffeeCampaign> firstCoffeeCampaign =  firstCoffeeCampaignRepository.findByUser(currentUser.getId(),request.getCampaignCode(),
+                AppConstants.USED);
+        if(firstCoffeeCampaign == null  || firstCoffeeCampaign.size()==0 ){
+            try {
+                if(request.getOrders()!=null && request.getOrders().size()>0){
+                    request.getOrders().sort((r1, r2) -> {
+                        BigDecimal price1 = r1.getTotalPrice();
+                        price1 = price1.divide(BigDecimal.valueOf(r1.getProductAmount()));
+                        BigDecimal price2 = r2.getTotalPrice();
+                        price2 = price2.divide(BigDecimal.valueOf(r2.getProductAmount()));
+                        return price1.compareTo(price2);
+                    });
+                }
+
+                discountAmount = request.getOrders().get(0).getTotalPrice();
+                discountAmount= discountAmount.divide(BigDecimal.valueOf(request.getOrders().get(0).getProductAmount()));
+
+                if(discountAmount.compareTo(BigDecimal.ZERO)> 0 ){
+
+                    firstCoffeeCampaignRepository.save(FirstCoffeeCampaign.builder().campaignCode(request.getCampaignCode())
+                            .discountAmout(discountAmount).
+                                    insertDate(new Date()).
+                                    status(AppConstants.TOKEN).
+                                    user(new User(currentUser.getId())).
+                                    campaignCode(request.getCampaignCode()).
+                                    build());
+                }
+
+
+                return ApplyCampaignResponse.builder().discountAmount(discountAmount).label("İlk Kahven hediye!").build();
+
+            } catch (Exception e) {
+                return ApplyCampaignResponse.builder().label("Kampanya kodu uygulanamadı").discountAmount(BigDecimal.ZERO).build();
+            }
+
+        }else{
+            return ApplyCampaignResponse.builder().label("Geçersiz kod.").discountAmount(BigDecimal.ZERO).build();
+        }
+
+
+    }
+
+    public OrderHistoryRto getOrders(UserPrincipal currentUser, String method, String uid) {
 
         List<CoffeeOrder> orderList = new ArrayList<CoffeeOrder>();
         if (AppConstants.NEWORDERS_METHOD.equals(method)) {
@@ -170,6 +259,8 @@ public class CoffeeService {
         } else if (AppConstants.HISTORY_METHOD.equals(method)) {
             List<String> uidList = orderRepository.findLast5UidByUser(currentUser.getId());
             orderList = orderRepository.findByOrderUIDInOrderByCreatedAtDesc(uidList);
+        }else if (AppConstants.BY_UID.equals(method)) {
+            orderList = orderRepository.findByOrderUIDInOrderByCreatedAtDesc(Arrays.asList(uid));
         }
 
         Map<String, List<CoffeeOrderRto>> last5Orders = new HashMap<String, List<CoffeeOrderRto>>();
@@ -227,6 +318,21 @@ public class CoffeeService {
     private String getStatus(CoffeeOrderRto entry) {
 
         switch (entry.getStatus()) {
+            case 0:
+                return "Sipariş alındı.";
+            case 1:
+                return "Hazırlanıyor.";
+            case 2:
+                return "Gönderildi";
+            case 3:
+                return "Teslim alındı";
+            default:
+                return "";
+        }
+    }
+    private String getStatus(Integer entry) {
+
+        switch (entry) {
             case 0:
                 return "Sipariş alındı.";
             case 1:
@@ -315,6 +421,14 @@ public class CoffeeService {
                 item.setStatus(request.getStatus());
                 orderRepository.save(item);
             });
+
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            ResponseEntity<String> response = restTemplate.postForEntity(orderPushServiceUrl+"/updateOrder",
+                    request,
+                    String.class);
+
 
             return true;
         } catch (Exception e) {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Created by rajeevkumarsingh on 02/08/17.
+ * Created by ahmetuygun
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -20,7 +20,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByPhone(String username);
 
-    Boolean existsByPhone(String phone);
+    Boolean existsByPhoneAndStatus(String phone, Integer status);
 
-    Boolean existsByEmail(String email);
+    Boolean existsByEmailAndStatus(String email, Integer status);
+
+    Optional<User>  findByEmailAndPhoneAndStatus(String email, String phone, Integer status);
+
+
+
 }

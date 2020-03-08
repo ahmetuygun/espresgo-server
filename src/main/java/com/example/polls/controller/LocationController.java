@@ -10,7 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Created by rajeevkumarsingh on 02/08/17.
+ * Created by ahmetuygun
  */
 @RestController
 @RequestMapping("/api/location")
@@ -33,7 +33,7 @@ public class LocationController {
 
 
 	@PostMapping("/inserUserLocation")
-	public ResponseEntity<?> inserUserLocation(@CurrentUser UserPrincipal currentUser, @RequestBody  VehicleLocationRto location) {
+	public ResponseEntity<?> inserUserLgetLastLocationocation(@CurrentUser UserPrincipal currentUser, @RequestBody  VehicleLocationRto location) {
 		return ResponseEntity.ok(locationService.inserUserLocation(location, currentUser));
 	}
 

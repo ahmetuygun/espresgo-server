@@ -6,7 +6,7 @@ import javax.validation.constraints.Size;
 import java.util.Objects;
 
 /**
- * Created by rajeevkumarsingh on 20/11/17.
+ * Created by ahmetuygun
  */
 
 @Entity

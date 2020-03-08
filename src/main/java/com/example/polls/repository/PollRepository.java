@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Created by rajeevkumarsingh on 20/11/17.
+ * Created by ahmetuygun
  */
 @Repository
 public interface PollRepository extends JpaRepository<Poll, Long> {

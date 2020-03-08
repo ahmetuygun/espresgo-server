@@ -22,5 +22,7 @@ public class AdressRto {
  
     private CompanyRto company;
 
+    private String addressDesciption;
+
 
 }

@@ -1,7 +1,7 @@
 package com.example.polls.payload;
 
 /**
- * Created by rajeevkumarsingh on 19/08/17.
+ * Created by ahmetuygun
  */
 public class JwtAuthenticationResponse {
     private String accessToken;

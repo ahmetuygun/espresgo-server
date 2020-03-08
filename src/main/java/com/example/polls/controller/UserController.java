@@ -16,11 +16,15 @@ import com.example.polls.repository.VoteRepository;
 import com.example.polls.security.UserPrincipal;
 import com.example.polls.security.CurrentUser;
 
+import com.example.polls.util.AppConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -34,8 +38,8 @@ public class UserController {
 
     @Autowired
     private VoteRepository voteRepository;
-    
-    
+
+
     @Autowired
     AddressRepository addressRepository;
 
@@ -43,72 +47,73 @@ public class UserController {
 
     @GetMapping("/user/hasAddress")
     @PreAuthorize("hasRole('USER')")
-    public boolean  getCurrentUserAddress(@CurrentUser UserPrincipal currentUser) {
-    	try {
-        	return addressRepository.findByUser(currentUser.getId()).isPresent();
+    public boolean getCurrentUserAddress(@CurrentUser UserPrincipal currentUser) {
+        try {
+            return addressRepository.findByUser(currentUser.getId()).isPresent();
 
-		} catch (Exception e) {
-			return false;
-		}
-    
+        } catch (Exception e) {
+            return false;
+        }
+
     }
-    
-    
+
+
     @GetMapping("/user/me")
     @PreAuthorize("hasRole('USER')")
     public UserSummary getCurrentUser(@CurrentUser UserPrincipal currentUser) {
-    	
-    	AdressRto adressRto=null;
-    
-    	try {
-    		Adress adress = addressRepository.findByUser(currentUser.getId()).get();
-        	
-        	CityRto cityRto = CityRto.builder()
-        			.name(adress.getCity().getName())
-        			.id(adress.getCity().getId())
-        			.build();
-        	
-        	DistrictRto  districtRto =  DistrictRto.builder()
-        			.name(adress.getDistrict().getName())
-        			.id(adress.getDistrict().getId())
-        			.build();
-        	
-        	BuildingRto buildingRto = BuildingRto.builder()
-        			.name(adress.getBuilding().getName())
-        			.id(adress.getBuilding().getId())
-        			.build();
-        	
-        	CompanyRto companyRto = CompanyRto.builder()
-        			.name(adress.getCompany().getName())
-        			.id(adress.getCompany().getId())
-        			.build();
-        	
-           adressRto =AdressRto.builder()
-        			.city(cityRto)
-        			.district(districtRto)
-        			.building(buildingRto)
-        			.company(companyRto)
-        			.build();
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-    	
-    	
-    	return UserSummary.builder()
-    	.address(adressRto)
-    	.userPrincipal(currentUser)
-    	.build();
+
+        AdressRto adressRto = null;
+
+        try {
+            Adress adress = addressRepository.findByUser(currentUser.getId()).get();
+
+            CityRto cityRto = CityRto.builder()
+                    .name(adress.getCity().getName())
+                    .id(adress.getCity().getId())
+                    .build();
+
+            DistrictRto districtRto = DistrictRto.builder()
+                    .name(adress.getDistrict().getName())
+                    .id(adress.getDistrict().getId())
+                    .build();
+
+            BuildingRto buildingRto = BuildingRto.builder()
+                    .name(adress.getBuilding().getName())
+                    .id(adress.getBuilding().getId())
+                    .build();
+
+            CompanyRto companyRto = CompanyRto.builder()
+                    .name(adress.getCompany().getName())
+                    .id(adress.getCompany().getId())
+                    .build();
+
+            adressRto = AdressRto.builder()
+                    .city(cityRto)
+                    .addressDesciption(adress.getAddressDesciption())
+                    .district(districtRto)
+                    .building(buildingRto)
+                    .company(companyRto)
+                    .build();
+        } catch (Exception e) {
+            // TODO: handle exception
         }
+
+
+        return UserSummary.builder()
+                .address(adressRto)
+                .userPrincipal(currentUser)
+                .build();
+    }
 
     @GetMapping("/user/checkUsernameAvailability")
     public UserIdentityAvailability checkUsernameAvailability(@RequestParam(value = "username") String username) {
-        Boolean isAvailable = !userRepository.existsByPhone(username);
+        Boolean isAvailable = !userRepository.existsByPhoneAndStatus(username, AppConstants.UserStatus.ACTIVE);
         return new UserIdentityAvailability(isAvailable);
     }
 
     @GetMapping("/user/checkEmailAvailability")
     public UserIdentityAvailability checkEmailAvailability(@RequestParam(value = "email") String email) {
-        Boolean isAvailable = !userRepository.existsByEmail(email);
+        Boolean isAvailable = !userRepository.existsByEmailAndStatus(email, AppConstants.UserStatus.ACTIVE);
         return new UserIdentityAvailability(isAvailable);
     }
 
@@ -117,15 +122,10 @@ public class UserController {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
-
-
         UserProfile userProfile = new UserProfile(user.getId(), user.getPhone(), user.getName(), user.getCreatedAt());
 
         return userProfile;
     }
-
-    
-
 
 
 }

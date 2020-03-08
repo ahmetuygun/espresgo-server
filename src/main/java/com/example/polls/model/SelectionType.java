@@ -1,7 +1,7 @@
 package com.example.polls.model;
 
 /**
- * Created by rajeevkumarsingh on 07/12/17.
+ * Created by ahmetuygun
  */
 
 public enum  SelectionType {

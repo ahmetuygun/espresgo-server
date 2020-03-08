@@ -16,7 +16,7 @@ public class CoffeeSummaryRto {
 	private String description;
 	private String image;
 	private Long id;
-
+	private String productType;
 
 
 }
