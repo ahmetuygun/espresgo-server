@@ -1,5 +1,7 @@
 package com.example.polls.controller;
 
+import com.example.polls.model.Util;
+import com.example.polls.repository.UtilRepository;
 import com.example.polls.security.CurrentUser;
 import com.example.polls.security.UserPrincipal;
 import com.example.polls.service.UtilService;
@@ -20,6 +22,10 @@ public class UtilController {
 
 	@Autowired
 	UtilService utilService;
+
+
+	@Autowired
+	UtilRepository utilRepository;
 
 	@GetMapping("/closeLocation")
 	@PreAuthorize("hasRole('ADMIN')")
@@ -57,6 +63,21 @@ public class UtilController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> isLocationOpen() {
 		return ResponseEntity.ok(utilService.get(AppConstants.ORDER_STATUS,AppConstants.CLOSE ));
+	}
+
+	@GetMapping("/getWhatsAppNumber")
+	public String getWhatsAppNumber() {
+
+		Util number = utilRepository.findByName(AppConstants.WHATSAPP_NUMBER);
+
+		if(number!=null){
+
+			return number.getValue();
+		}
+
+
+		return null;
+
 	}
 
 }

@@ -8,7 +8,7 @@ public interface AppConstants {
     String TOKEN = "TOKEN";
     String USED = "USED";
 
-    String ILKKAHVE = "ILKKAHVE2020";
+    String ILKKAHVE = "ESPRESGO101";
 
 
 
@@ -23,6 +23,9 @@ public interface AppConstants {
     String BY_UID = "BY_UID";
 
     String ORDER_STATUS = "ORDER_STATUS";
+
+    String WHATSAPP_NUMBER = "WHATSAPP_NUMBER";
+
 
     String LOCATION_STATUS = "LOCATION_STATUS";
 
